@@ -1,0 +1,124 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+
+\geometry{a4paper, margin=1in}
+
+\title{Proyecto de Diseño y Análisis de Algoritmos: Problema de Logística Discreta (DLP)}
+\author{Salma Fonseca Curbelo C-412}
+\author{José Ernesto Morales Lazo C-412}
+
+\begin{document}
+
+\maketitle
+
+\section{Formalización del Modelo de Logística Discreta}
+
+\subsection{Estructuras de Datos de Entrada}
+\begin{itemize}
+    \item \textbf{Mulas ($M$):} Un arreglo \texttt{mulas[]} de tamaño $n$, donde cada posición $i$ contiene la capacidad $c_i$.
+    \begin{itemize}
+        \item $c_i \in \mathbb{R}^+$: Capacidad de carga de la mula $m_i$.
+    \end{itemize}
+    \item \textbf{Artículos ($A$):} Un arreglo \texttt{articulos[]} de tamaño $k$, donde cada posición $j$ contiene una tupla $\langle w_j, v_j \rangle$.
+    \begin{itemize}
+        \item $w_j \in \mathbb{R}^+$: Peso del artículo $a_j$.
+        \item $v_j \in \mathbb{R}^+$: Valor del artículo $a_j$.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Variables de Decisión}
+Definimos la matriz binaria de asignación:
+\[
+x_{ij} = 
+\begin{cases} 
+1 & \text{si el artículo } j \text{ se asigna a la mula } i \\ 
+0 & \text{en otro caso} 
+\end{cases}
+\]
+$\forall i \in \{1, \dots, n\}, \forall j \in \{1, \dots, k\}$.
+
+\subsection{Modelo Matemático (Linealizado)}
+Para que el modelo sea procesable por un computador, linealizamos la función objetivo utilizando dos variables auxiliares: $V_{max}$ (valor de la mula más cargada) y $V_{min}$ (valor de la mula menos cargada).
+
+\textbf{Función Objetivo:}
+\[ \text{Minimizar } Z = V_{max} - V_{min} \]
+
+\textbf{Sujeto a (Restricciones):}
+\begin{enumerate}
+    \item \textbf{Cálculo de Valores por Mula:}
+    El valor total $V_i$ transportado por la mula $i$ se define como:
+    \[ V_i = \sum_{j=1}^{k} v_j x_{ij} \quad \forall i \in \{1, \dots, n\} \]
+    Y debe cumplirse que:
+    \[ V_{min} \le V_i \le V_{max} \quad \forall i \in \{1, \dots, n\} \]
+
+    \item \textbf{Asignación Única (Partición):}
+    Cada artículo $j$ debe asignarse exactamente a una mula.
+    \[ \sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \in \{1, \dots, k\} \]
+
+    \item \textbf{Capacidad de Peso:}
+    La carga de la mula $i$ no debe exceder su capacidad individual $c_i$.
+    \[ \sum_{j=1}^{k} w_j x_{ij} \le c_i \quad \forall i \in \{1, \dots, n\} \]
+
+    \item \textbf{Integridad de Variables:}
+    \[ x_{ij} \in \{0, 1\}, \quad V_{max}, V_{min} \ge 0 \]
+\end{enumerate}
+
+\subsection{Propiedades de la Salida}
+\begin{itemize}
+    \item \textbf{Factibilidad:} Si no existe ninguna combinación de $x_{ij}$ que satisfaga simultáneamente la capacidad de peso de todas las mulas y la asignación de todos los artículos, el sistema debe informar que la instancia es Irresoluble.
+    \item \textbf{Optimidad:} La solución devuelta debe garantizar que no existe otra configuración donde la brecha de riesgo $(V_{max} - V_{min})$ sea menor.
+    \item \textbf{Formato de Salida:} Una lista de conjuntos $S = \{M_1, M_2, \dots, M_n\}$, donde cada $M_i$ contiene los índices $j$ de los artículos tales que $x_{ij} = 1$.
+\end{itemize}
+
+\section{Análisis de Complejidad Computacional}
+
+\subsection{Demostración de que el Problema de la Partición es NP Completo}
+\textbf{El Problema de la Partición:} Dado un multiconjunto $S$ de enteros positivos, ¿es posible dividir $S$ en dos subconjuntos $S_1$ y $S_2$ tales que la suma de los elementos en $S_1$ sea igual a la suma de los elementos en $S_2$?
+
+\subsubsection{Demostración de que el problema de la partición es NP}
+Un problema está en la clase NP si un certificado puede ser verificado en tiempo polinomial.
+\begin{enumerate}
+    \item \textbf{Certificado:} Una lista de los elementos que pertenecen al subconjunto $S_1$.
+    \item \textbf{Verificación:} Un algoritmo suma los elementos de $S_1$ y suma los elementos de $S \setminus S_1$ ($S_2$). Luego compara si $\sum S_1 = \sum S_2$.
+    \item \textbf{Tiempo:} La suma y la comparación son operaciones lineales $O(n)$. Por lo tanto, el problema de la partición es NP.
+\end{enumerate}
+
+\subsubsection{Demostración de que el problema de la partición es NP-Completo}
+Se usará el problema de la Suma de Subconjuntos (\textbf{Subset-Sum}), el cual es NP-Completo.
+
+\textbf{Reducción Subset-Sum $\le_p$ Partición:}
+\begin{enumerate}
+    \item \textbf{Construcción:} Sea una instancia de Subset-Sum con conjunto $A$ y objetivo $t$. Calculamos $\Sigma = \sum_{a_i \in A} a_i$. Construimos $S = A \cup \{J, K\}$ donde $J = 2\Sigma - t$ y $K = \Sigma + t$.
+    \item \textbf{Equivalencia:} La suma total de $S$ es $4\Sigma$. Una partición requiere que cada subconjunto sume $2\Sigma$. $J$ y $K$ no pueden estar juntos pues $J+K = 3\Sigma > 2\Sigma$. Si $J$ está en $S_1$, entonces $J + \sum A_{sub} = 2\Sigma \implies (2\Sigma - t) + \sum A_{sub} = 2\Sigma \implies \sum A_{sub} = t$.
+\end{enumerate}
+Existe una partición si y solo si existe un subconjunto que sume $t$. Por lo tanto, la Partición es NP-Completo.
+
+\subsection{Demostración de que el Problema DLP es NP Completo}
+
+\subsubsection{Demostración de que DLP es NP}
+\begin{enumerate}
+    \item \textbf{Certificado:} Una asignación propuesta de cada artículo a una mula específica.
+    \item \textbf{Verificación:} Se suma el peso por mula y se comprueba contra $c_i$. Se calcula $V_j$ para cada mula y se verifica si $|V_a - V_b| \le K$ para todo par.
+    \item \textbf{Tiempo:} Sumas en $O(n)$ y comparaciones de pares en $O(n^2)$. Es verificable en tiempo polinomial. DLP es NP.
+\end{enumerate}
+
+\subsubsection{Demostración que DLP es NP-difícil}
+\textbf{Reducción Partición $\le_p$ DLP:}
+Tomamos $S = \{x_1, \dots, x_n\}$ de Partición y construimos:
+\begin{enumerate}
+    \item \textbf{Artículos:} Un artículo $i$ por cada $x_i \in S$.
+    \item \textbf{Pesos y Valores:} $w_i = x_i, v_i = x_i$.
+    \item \textbf{Parámetros:} $m=2$, $K=0$, $C = (\sum x_i)/2$.
+\end{enumerate}
+
+\textbf{Equivalencia:}
+Si Partición tiene solución ($\sum S_1 = \sum S_2$), asignamos $S_1$ a Mula 1 y $S_2$ a Mula 2. Ambas cumplen peso $\le C$ y diferencia de valor $0 \le K$. DLP devuelve SÍ.
+Si DLP devuelve SÍ, con $K=0$ y $m=2$, entonces $\sum_{i \in M_1} v_i = \sum_{i \in M_2} v_i$. Como $v_i = x_i$, esto es una partición válida de $S$.
+
+\textbf{Conclusión:} DLP es un caso general de Partición. Por lo tanto, el Problema de Logística Discreta (DLP) es NP-Completo.
+
+\end{document}
