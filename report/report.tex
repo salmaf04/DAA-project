@@ -8,9 +8,7 @@
 \geometry{a4paper, margin=1in}
 
 \title{Proyecto de Diseño y Análisis de Algoritmos: Problema de Logística Discreta (DLP)}
-\author{Salma Fonseca Curbelo C-412}
-\author{José Ernesto Morales Lazo C-412}
-
+\author{Salma Fonseca Curbelo C-412, José Ernesto Morales Lazo C-412}
 \begin{document}
 
 \maketitle
@@ -77,48 +75,112 @@ Para que el modelo sea procesable por un computador, linealizamos la función ob
 \section{Análisis de Complejidad Computacional}
 
 \subsection{Demostración de que el Problema de la Partición es NP Completo}
-\textbf{El Problema de la Partición:} Dado un multiconjunto $S$ de enteros positivos, ¿es posible dividir $S$ en dos subconjuntos $S_1$ y $S_2$ tales que la suma de los elementos en $S_1$ sea igual a la suma de los elementos en $S_2$?
 
-\subsubsection{Demostración de que el problema de la partición es NP}
-Un problema está en la clase NP si un certificado puede ser verificado en tiempo polinomial.
+\textbf{El Problema de la Partición:} Dado un multiconjunto $S$ de enteros positivos , ¿es posible dividir $S$ en dos subconjuntos $S_1$ y $S_2$ tales que la suma de los elementos en $S_1$ sea igual a la suma de los elementos en $S_2$?
+
+\subsubsection{Demostración de que el problema de la partición es NP:}
+
+Un problema está en la clase NP si una solución propuesta (un "certificado") puede ser verificada en tiempo polinomial.
+
 \begin{enumerate}
     \item \textbf{Certificado:} Una lista de los elementos que pertenecen al subconjunto $S_1$.
-    \item \textbf{Verificación:} Un algoritmo suma los elementos de $S_1$ y suma los elementos de $S \setminus S_1$ ($S_2$). Luego compara si $\sum S_1 = \sum S_2$.
-    \item \textbf{Tiempo:} La suma y la comparación son operaciones lineales $O(n)$. Por lo tanto, el problema de la partición es NP.
+    \item \textbf{Verificación:} Un algoritmo simplemente suma los elementos de $S_1$ y suma los elementos de $S \setminus S_1$ (que sería $S_2$). Luego compara si las sumas son iguales.
+    \item \textbf{Tiempo:} La suma y la comparación son operaciones lineales. Por lo tanto, el problema de la partición es NP.
 \end{enumerate}
 
-\subsubsection{Demostración de que el problema de la partición es NP-Completo}
-Se usará el problema de la Suma de Subconjuntos (\textbf{Subset-Sum}), el cual es NP-Completo.
+\subsubsection{Demostración de que el problema de la partición es NP-Completo:}
 
-\textbf{Reducción Subset-Sum $\le_p$ Partición:}
+Se usará el problema de la Suma de Subconjuntos (Subset-Sum), el cual se vió en clase que es NP-Completo.
+
+\textbf{Subset-Sum:} Dado un conjunto de enteros $A$ y un entero objetivo $t$, ¿existe un subconjunto $A' \subseteq A$ tal que la suma de sus elementos sea $t$?
+
+\textbf{Reducción Subset-Sum $\le_p$ Partición}
+
+Se debe transformar cualquier instancia de Subset-Sum en una instancia del problema de la Partición en tiempo polinomial.
+
 \begin{enumerate}
-    \item \textbf{Construcción:} Sea una instancia de Subset-Sum con conjunto $A$ y objetivo $t$. Calculamos $\Sigma = \sum_{a_i \in A} a_i$. Construimos $S = A \cup \{J, K\}$ donde $J = 2\Sigma - t$ y $K = \Sigma + t$.
-    \item \textbf{Equivalencia:} La suma total de $S$ es $4\Sigma$. Una partición requiere que cada subconjunto sume $2\Sigma$. $J$ y $K$ no pueden estar juntos pues $J+K = 3\Sigma > 2\Sigma$. Si $J$ está en $S_1$, entonces $J + \sum A_{sub} = 2\Sigma \implies (2\Sigma - t) + \sum A_{sub} = 2\Sigma \implies \sum A_{sub} = t$.
+    \item \textbf{Construcción:}
+    Sea una instancia de Subset-Sum con conjunto $A$ y objetivo $t$.
+    Se calcula la suma total de $A$, denotada como $\Sigma = \Sigma_{i=1}^n a_i$.
+    Se construye un nuevo conjunto $S$ para el problema partición agregando dos elementos adicionales especiales, $J$ y $K$, al conjunto $A$.
+    \begin{itemize}
+        \item $J = 2\Sigma - t$
+        \item $K = \Sigma + t$
+        \item $S = A \cup \{J, K\}$
+    \end{itemize}
+
+    \item \textbf{Equivalencia:}
+    La suma total de los elementos en el nuevo conjunto es:
+    \[ \text{Sum}(S) = \Sigma + (2\Sigma - t) + (\Sigma + t) = 4\Sigma \]
+    
+    Para que exista una partición válida en $S$, se debe dividir $S$ en dos subconjuntos, cada uno sumando exactamente la mitad del total, es decir, $2\Sigma$.
+    
+    Cómo se puede llegar a $2\Sigma$:
+    \begin{itemize}
+        \item Los elementos $J$ y $K$ no pueden estar en el mismo subconjunto porque $J + K = 3\Sigma$, lo cual excede el objetivo $2\Sigma$.
+        \item Por lo tanto, $J$ debe estar en un subconjunto ($S_1$) y $K$ en el otro ($S_2$).
+        \item Para que $S_1$ sume $2\Sigma$, debe contener a $J$ más algunos elementos de $A$ ($A_{sub}$) tal que:
+        \[ J + \Sigma A_{sub} = 2\Sigma \]
+        \[ (2\Sigma - t) + \Sigma A_{sub} = 2\Sigma \]
+        \[ \Sigma A_{sub} = t \]
+    \end{itemize}
 \end{enumerate}
-Existe una partición si y solo si existe un subconjunto que sume $t$. Por lo tanto, la Partición es NP-Completo.
 
-\subsection{Demostración de que el Problema DLP es NP Completo}
+\textbf{Conclusión:} Existe una partición válida en $S$ si y solo si existe un subconjunto en $A$ que sume exactamente $t$. Como la transformación es polinomial, el problema de la Partición es NP-Completo.
 
-\subsubsection{Demostración de que DLP es NP}
+\subsection{Demostración de que el Problema de la DLP es NP Completo}
+
+\subsubsection{Demostración de que DLP es NP:}
+
 \begin{enumerate}
     \item \textbf{Certificado:} Una asignación propuesta de cada artículo a una mula específica.
-    \item \textbf{Verificación:} Se suma el peso por mula y se comprueba contra $c_i$. Se calcula $V_j$ para cada mula y se verifica si $|V_a - V_b| \le K$ para todo par.
-    \item \textbf{Tiempo:} Sumas en $O(n)$ y comparaciones de pares en $O(n^2)$. Es verificable en tiempo polinomial. DLP es NP.
+    \item \textbf{Verificación:} Un algoritmo verificador calcula la suma de pesos de cada una de las $m$ mulas y comprueba si excede el límite de peso $C$. Luego calcula la suma de valores $V_j$ para cada mula y compara para cada par de mulas $V_a$ y $V_b$ y verifica si $|V_a-V_b| \le K$.
+    \item \textbf{Tiempo:} Las sumas son operaciones lineales $O(n)$ y como hay $m(m-1)/2$ pares de mulas y $m \le n$, la compración es $O(n^2)$, por lo que se puede verificar en tiempo polinomial.
 \end{enumerate}
+
+Como la verificación se realiza en tiempo polinomial, DLP es NP.
 
 \subsubsection{Demostración que DLP es NP-difícil}
-\textbf{Reducción Partición $\le_p$ DLP:}
-Tomamos $S = \{x_1, \dots, x_n\}$ de Partición y construimos:
+
+Se usará el problema de la Partición, el cual se demostró anteriormente que es NP-Completo.
+
+\textbf{Reducción Partición $\le_p$ DLP}
+
+Se tomará una instancia arbitraria de Partición con el conjunto $S$. Sea $W_{total} = \Sigma_{i=1}^n x_i$.
+Se construye una instancia de DLP con los siguientes parámetros específicos:
+
 \begin{enumerate}
-    \item \textbf{Artículos:} Un artículo $i$ por cada $x_i \in S$.
-    \item \textbf{Pesos y Valores:} $w_i = x_i, v_i = x_i$.
-    \item \textbf{Parámetros:} $m=2$, $K=0$, $C = (\sum x_i)/2$.
+    \item \textbf{Artículos:} Para cada número $x_i \in S$, se crea un artículo $i$.
+    \item \textbf{Pesos y Valores:} Se define tanto el peso como el valor igual al número original: $w_i=x_i, v_i=x_i$.
+    \item \textbf{Número de Mulas ($m$):} Se fija $m=2$.
+    \item \textbf{Diferencia permitida ($K$):} Se fija $K=0$.
+    \item \textbf{Capacidad ($C$):} Se fija $C = W_{total} / 2$. (Si $W_{total}$ es impar, no hay solución para Partición ni para este DLP, así que se asume par).
 \end{enumerate}
 
-\textbf{Equivalencia:}
-Si Partición tiene solución ($\sum S_1 = \sum S_2$), asignamos $S_1$ a Mula 1 y $S_2$ a Mula 2. Ambas cumplen peso $\le C$ y diferencia de valor $0 \le K$. DLP devuelve SÍ.
-Si DLP devuelve SÍ, con $K=0$ y $m=2$, entonces $\sum_{i \in M_1} v_i = \sum_{i \in M_2} v_i$. Como $v_i = x_i$, esto es una partición válida de $S$.
+\textbf{Demostración de Equivalencia:}
 
-\textbf{Conclusión:} DLP es un caso general de Partición. Por lo tanto, el Problema de Logística Discreta (DLP) es NP-Completo.
+Si Partición tiene solución:
+Existen $S_1$ y $S_2$ tales que $\Sigma S_1 = \Sigma S_2 = W_{total} / 2$.
+Se asignan los artículos correspondientes a $S_1$ a la Mula 1 y los de $S_2$ a la Mula 2.
+Verificación de Peso: La Mula 1 lleva peso $W_{total} / 2$, que es $= C$. La Mula 2 igual. (Cumple).
+Verificación de Balance: El valor en la Mula 1 es $W_{total} / 2$. El valor en la Mula 2 es $W_{total} / 2$. La diferencia es $|W_{total} / 2 - W_{total} / 2| = 0$. Como $0 \le K$ (donde $K=0$), cumple la condición.
+Por tanto, DLP devuelve SÍ.
+
+Si DLP devuelve SÍ:
+Significa que existe una distribución en 2 mulas tal que la diferencia de valores es $\le 0$. Como el valor absoluto no puede ser negativo, la diferencia debe ser exactamente 0.
+
+\[ \Sigma_{i \in m1} v_i = \Sigma_{i \in m2} v_i \]
+
+Dado que se definió $v_i = x_i$, esto implica:
+
+\[ \Sigma_{i \in m1} x_i = \Sigma_{i \in m2} x_i \]
+
+Esto constituye una partición válida del conjunto original en dos sumas iguales.
+
+\textbf{Conclusión:}
+Se ha demostrado que el problema Partición es un caso particular del problema DLP (específicamente cuando $m=2, w_i=v_i$ y $K=0$).
+Dado que el caso particular es NP-Completo, el caso general es al menos igual de difícil.
+
+Por lo tanto, el Problema de Logística Discreta (DLP) es NP-Completo.
 
 \end{document}
