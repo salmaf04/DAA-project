@@ -4,6 +4,8 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{geometry}
+\usepackage{graphicx}
+
 
 \geometry{a4paper, margin=1in}
 
@@ -367,6 +369,81 @@ def solucion_profesional_mejorada(articulos, mulas_capacidades):
 
     return (max(m['valor'] for m in mulas) - min(m['valor'] for m in mulas)), mulas, no_asignados
 \end{verbatim}
+\section{Análisis Experimental de Resultados}
 
+Para validar el desempeño de los algoritmos propuestos, se diseñó e implementó un marco de experimentación exhaustivo. El objetivo de esta fase es comparar la \textit{calidad} de las soluciones (qué tan cerca están del óptimo) y la \textit{eficiencia} temporal (cuánto tardan en ejecutarse) bajo diferentes escenarios.
+
+\subsection{Metodología de Pruebas}
+Se utilizó un generador para crear un conjunto de más de 100 instancias de prueba aleatorias, variando el número de artículos ($N$) entre 5 y 22 para las comparativas directas, y hasta $N=45$ para las pruebas de carga máxima. Se clasificaron las instancias en cuatro tipos para evaluar el comportamiento en los límites del problema:
+
+\begin{itemize}
+    \item \textbf{Normal:} Pesos y valores distribuidos uniformemente. Representa un escenario estándar de operación.
+    \item \textbf{Capacidad Limitada (Tight):} Artículos muy pesados (30-60\% de la capacidad de la mula). Pone a prueba la capacidad de aprovechamiento de espacio.
+    \item \textbf{Artículos Pequeños (Tiny):} Muchos artículos de poco tamaño y poco valor. Este escenario suele ser el más difícil para la Programación Dinámica (PD) debido a la profundidad que alcanza el árbol de recursión.
+    \item \textbf{Casos Complejos (Greedy Trap):} Instancias diseñadas específicamente para dificultar la tarea a los algoritmos voraces, colocando valores altos al principio que desequilibran la carga final.
+\end{itemize}
+
+\subsection{Análisis de Escalamiento y Tiempo de Ejecución}
+
+La Figura muestra la comparación de tiempos de ejecución en escala logarítmica. Se observa una diferencia notable entre ambos enfoques:
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{time_analysis.png} 
+    \caption{Comparativa de Escalabilidad}
+    \label{fig:time_analysis}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Algoritmo Exacto (PD):} Muestra una curva de crecimiento muy acelerada. Aunque para $N < 10$ responde en milisegundos, el tiempo aumenta drásticamente de forma impredecible dependiendo de la dificultad de la instancia.
+    \item \textbf{Algoritmo Eficiente (Aproximación):} Mantiene un tiempo de ejecución prácticamente constante y lineal (cercano a $10^{-4}$ segundos) incluso cuando $N$ aumenta.
+\end{itemize}
+
+Una observación importante es que en las instancias con \textit{Artículos Pequeños}. Mientras que la aproximación las resolvió instantáneamente, el algoritmo exacto sufrió retardos significativos (ej. 14.1 segundos para $N=17$) debido a que los artículos pequeños dificultan el descarte de opciones, obligando al algoritmo a explorar casi todas las combinaciones posibles.
+
+\subsection{Evaluación de la Calidad (Diferencia respecto al Óptimo)}
+
+Se analizó el porcentaje de diferencia de la solución aproximada respecto a la óptima como se observa en la siguiente figura.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{solution_quality.png} 
+    \caption{Calidad de las Soluciones}
+    \label{fig:solution_quality}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Eficacia en Casos Complejos:} Sorprendentemente, la heurística propuesta logró igualar al óptimo en la mayoría de las instancias de \textit{Casos Complejos} y \textit{Artículos Pequeños}. Esto sugiere que la fase de mejora local es altamente efectiva para corregir las decisiones iniciales.
+    
+    \item \textbf{Robustez en Saturación:} En casos donde las mulas se llenan rápidamente, el algoritmo exacto a menudo indicó que el problema no tenía solución al no poder encajar todos los artículos obligatorios. En contraste, el algoritmo eficiente demostró mayor flexibilidad: en lugar de fallar, descartó inteligentemente los artículos menos valiosos para entregar una solución válida con la carga máxima posible.
+    
+    \item \textbf{Variabilidad:} En instancias normales, se observaron diferencias ocasionales mayores. Esto ocurre en escenarios matemáticamente sensibles donde existe una combinación perfecta difícil de encontrar, aunque en promedio la solución se mantuvo adecuada y muy cercana a la ideal.
+\end{enumerate}
+
+\subsection{Límite Computacional de la Búsqueda Exhaustiva}
+Mediante una prueba de carga incremental con un límite de tiempo de 60 segundos, se determinó el límite operativo del enfoque exacto.
+\begin{itemize}
+    \item \textbf{Zona Estable ($N \le 30$):} El algoritmo resuelve la mayoría de casos en menos de 5 segundos.
+    \item \textbf{Zona Inestable ($30 < N < 40$):} Los tiempos oscilan drásticamente. Se registraron casos de $N=33$ tomando 47 segundos, seguidos de $N=37$ tomando 3 segundos, evidenciando la dependencia de la estructura de los datos.
+    \item \textbf{Punto de Quiebre ($N \approx 43$):} Al superar los 43 artículos con 3 mulas, el algoritmo consistentemente superó el minuto de ejecución o agotó la memoria disponible.
+\end{itemize}
+
+\subsection{Conclusiones Finales}
+
+Los resultados experimentales confirman las predicciones teóricas de complejidad. La siguiente tabla resume la aplicabilidad recomendada para cada algoritmo en el contexto del negocio:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|p{5cm}|p{5cm}|}
+\hline
+\textbf{Característica} & \textbf{Algoritmo Exacto (DP)} & \textbf{Solución Eficiente} \\ \hline
+\textbf{Precisión} & Óptima garantizada. & Alta en promedio; excelente en casos con muchos artículos pequeños. \\ \hline
+\textbf{Velocidad} & Lenta (Exponencial). Inviable para $N > 40$. & Extremadamente rápida (Tiempo Real). \\ \hline
+\textbf{Robustez} & Se detiene si la instancia es imposible de resolver perfectamente. & Se adapta descartando excedentes para mantener la operación. \\ \hline
+\textbf{Uso Ideal} & Planificación previa de cargas críticas y pequeñas. & Operación diaria con alto volumen de carga. \\ \hline
+\end{tabular}
+\caption{Resumen comparativo de los enfoques implementados.}
+\label{tab:conclusion}
+\end{table}
 
 \end{document}
