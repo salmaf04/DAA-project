@@ -183,4 +183,190 @@ Dado que el caso particular es NP-Completo, el caso general es al menos igual de
 
 Por lo tanto, el Problema de Logística Discreta (DLP) es NP-Completo.
 
+\section{Diseño de Soluciones Algorítmicas}
+
+Dado que el Problema de Logística Discreta (DLP) ha sido demostrado como NP-Completo en la sección anterior, es computacionalmente intratable resolverlo de manera exacta para instancias grandes en tiempo polinomial. Por ello, en esta sección se exploran soluciones algorítmicas prácticas. Primero, se presenta un algoritmo de fuerza bruta que garantiza la solución óptima, útil como línea base para comparar resultados en instancias pequeñas. Posteriormente, se propone una solución eficiente basada en heurísticas, combinando un enfoque voraz (greedy) con búsqueda local reforzada, para obtener soluciones aproximadas de alta calidad en tiempo razonable.
+
+\subsection{Enfoque Exacto: Programación Dinámica con Memoización}
+
+Para obtener la solución óptima del problema de transporte discreto, se implementó un algoritmo basado en Programación Dinámica con enfoque \textit{Top-Down}. Este método explora el espacio de soluciones de manera sistemática, asegurando el cumplimiento estricto de las restricciones de peso (similar al problema \textit{Bin Packing}) mientras minimiza la función objetivo de balanceo ($V_{max} - V_{min}$).
+
+A diferencia de una fuerza bruta pura, la inclusión de una tabla de memoización evita el recálculo de subproblemas idénticos que surgen de diferentes permutaciones de asignación que resultan en el mismo estado de carga acumulada.
+
+\subsubsection{Definición Formal}
+
+El problema se modela mediante la función recursiva $DP(i, \vec{S})$, definida por las siguientes características:
+
+\begin{itemize}
+    \item \textbf{Subproblema:} Determinar la asignación óptima para el conjunto de artículos restantes $\{i, \dots, N-1\}$, dado un estado actual de las mulas $\vec{S}$. El estado $\vec{S}$ se representa como una tupla que contiene pares $(v_k, w_k)$ indicando el valor y peso acumulado de cada mula $k$.
+    
+    \item \textbf{Relación de Recurrencia:} Para el artículo $i$, se exploran $M$ ramas de decisión (donde $M$ es el número de mulas). La función elige la opción que minimiza la diferencia final:
+    \begin{equation}
+        DP(i, \vec{S}) = \min_{k=1}^{M} \{ DP(i+1, \vec{S}'_k) \}
+    \end{equation}
+    Donde $\vec{S}'_k$ es el nuevo estado resultante de asignar el artículo $i$ a la mula $k$. Esta transición es válida si y solo si se cumple la restricción de capacidad:
+    $$ w_k + w_{articulo} \le Capacidad_k $$
+    
+    \item \textbf{Casos Base:} Cuando $i = N$ (todos los artículos han sido procesados), se evalúa la función objetivo sobre el estado final:
+    \begin{equation}
+        f(\vec{S}) = \max_{k}(v_k) - \min_{k}(v_k)
+    \end{equation}
+    
+    \item \textbf{Problema Original:} La ejecución comienza con la llamada $DP(0, \vec{S}_{vacía})$, donde todas las mulas inician con valor y peso cero.
+\end{itemize}
+
+\subsubsection{Complejidad Computacional}
+La complejidad temporal está determinada por el tamaño del espacio de estados únicos visitados. Si bien la memoización reduce drásticamente el tiempo comparado con $O(M^N)$, la complejidad sigue siendo \textbf{pseudo-polinomial} y exponencial respecto al número de mulas:
+$$ T(N, M) \approx O(N \cdot M \cdot |\mathcal{S}|) $$
+Donde $|\mathcal{S}|$ representa el número de combinaciones posibles de sumas de valores y pesos acumulados válidos en las $M$ mulas.
+
+\subsubsection{Implementación y Pseudocódigo}
+A continuación se presenta la implementación del algoritmo en Python. La variable \texttt{idx} denota el artículo actual (orden topológico $0 \to N$) y \texttt{memo} almacena las soluciones óptimas para evitar recomputar ramas del árbol.
+
+\begin{verbatim}
+def resolver_transporte_discreto(articulos, mulas_capacidades):
+    num_articulos = len(articulos)
+    num_mulas = len(mulas_capacidades)
+    # Tabla de memoización para almacenar subproblemas resueltos
+    memo = {}
+
+    def solve(idx, estados_mulas):
+        # Identificador único del subproblema (Estado)
+        estado_actual = (idx, estados_mulas)
+        
+        # 1. Verificación en tabla de memoización (Poda por redundancia)
+        if estado_actual in memo:
+            return memo[estado_actual]
+
+        # 2. Caso Base: Todos los artículos asignados
+        if idx == num_articulos:
+            valores = [m[0] for m in estados_mulas]
+            # Retorna la diferencia (objetivo) y el estado final
+            return max(valores) - min(valores), estados_mulas
+
+        mejor_dif = float('inf')
+        mejor_config = None
+        valor_art, peso_art = articulos[idx]
+
+        # 3. Transición: Intentar asignar el artículo actual a cada mula
+        for i in range(num_mulas):
+            v_curr, p_curr = estados_mulas[i]
+            
+            # Verificación de restricción de capacidad (Poda por factibilidad)
+            if p_curr + peso_art <= mulas_capacidades[i]:
+                # Crear nuevo estado (tuplas inmutables para hashing)
+                nuevas_mulas = list(estados_mulas)
+                nuevas_mulas[i] = (v_curr + valor_art, p_curr + peso_art)
+                
+                # Llamada Recursiva (Paso inductivo)
+                dif, config = solve(idx + 1, tuple(nuevas_mulas))
+                
+                # Minimización de la diferencia en el retorno
+                if dif < mejor_dif:
+                    mejor_dif = dif
+                    mejor_config = config
+
+        # Almacenar el mejor resultado encontrado para este estado
+        memo[estado_actual] = (mejor_dif, mejor_config)
+        return mejor_dif, mejor_config
+
+    # Estado Inicial: idx=0, mulas vacías
+    estado_inicial_mulas = tuple((0, 0) for _ in range(num_mulas))
+    resultado, configuracion_final = solve(0, estado_inicial_mulas)
+    
+    return resultado, configuracion_final
+\end{verbatim}
+\subsection{Solución Eficiente Basada en Heurísticas y Metaheurísticas}
+
+Para instancias mayores, se propone una heurística híbrida que combina kernelización previa, un algoritmo voraz inspirado en Longest Processing Time (LPT) adaptado al balance de valores, y una búsqueda local reforzada con movimientos simples e intercambios. Esta aproximación no garantiza optimalidad, pero ofrece una garantía práctica de rendimiento cercana al óptimo en muchos casos, con complejidad temporal polinomial ($O(k \log k + k n + I \cdot k^2)$), donde $I$ es el número de iteraciones de la búsqueda local (típicamente pequeño).
+
+\subsubsection{Kernelización Previa}
+Se realiza un preprocesamiento para reducir la instancia, rechazando artículos que excedan la capacidad máxima de cualquier mula.
+
+\subsubsection{Algoritmo Voraz (Greedy LPT Adaptado)}
+\begin{itemize}
+    \item Ordenar los artículos por valor descendente para priorizar el balance de riesgo.
+    \item Asignar cada artículo a la mula con el menor valor acumulado actual que tenga espacio suficiente en peso.
+    \item Si un artículo no cabe en ninguna mula, se marca como no asignado.
+\end{itemize}
+
+\subsubsection{Búsqueda Local Reforzada}
+
+\begin{itemize}
+    \item Iterativamente, identificar la mula más "rica" (mayor valor) y la más "pobre" (menor valor).
+    \item Intentar movimientos: Transferir un artículo de la rica a la pobre si mejora la diferencia y respeta el peso.
+    \item  Si no, intentar intercambios (swaps): Cambiar un artículo caro por uno barato entre rica y pobre, verificando pesos y mejora en la diferencia.
+    \item Repetir hasta que no se encuentren mejoras.
+\end{itemize}
+
+Esta metaheurística mejora localmente la solución greedy, escapando de óptimos locales simples.
+
+\subsubsection{Pseudocódigo}
+\begin{verbatim}
+def solucion_profesional_mejorada(articulos, mulas_capacidades):
+    # 1. Kernelización
+    items_procesables, rechazo_inicial = kernelizacion_previa(articulos, mulas_capacidades)
+    
+    # 2. Greedy LPT Adaptado
+    items = sorted([(v, p, i) for i, (v, p) in enumerate(items_procesables)], 
+                   key=lambda x: x[0], reverse=True)
+    num_mulas = len(mulas_capacidades)
+    mulas = [{'valor': 0, 'peso': 0, 'capacidad': cap, 'items': []} 
+             for cap in mulas_capacidades]
+    no_asignados = []
+    for item in items:
+        mulas_ordenadas = sorted(range(num_mulas), key=lambda i: mulas[i]['valor'])
+        asignado = False
+        for i in mulas_ordenadas:
+            if mulas[i]['peso'] + item[1] <= mulas[i]['capacidad']:
+                mulas[i]['valor'] += item[0]
+                mulas[i]['peso'] += item[1]
+                mulas[i]['items'].append(item)
+                asignado = True
+                break
+        if not asignado: no_asignados.append(item)
+
+    # 3. Búsqueda Local Reforzada
+    mejorado = True
+    while mejorado:
+        mejorado = False
+        rica = max(range(num_mulas), key=lambda i: mulas[i]['valor'])
+        pobre = min(range(num_mulas), key=lambda i: mulas[i]['valor'])
+        dif_actual = mulas[rica]['valor'] - mulas[pobre]['valor']
+
+        # Movimiento Simple
+        for i, item_r in enumerate(mulas[rica]['items']):
+            if mulas[pobre]['peso'] + item_r[1] <= mulas[pobre]['capacidad']:
+                nueva_dif = abs((mulas[rica]['valor'] - item_r[0]) - 
+                                (mulas[pobre]['valor'] + item_r[0]))
+                if nueva_dif < dif_actual:
+                    mulas[pobre]['items'].append(mulas[rica]['items'].pop(i))
+                    mulas[rica]['valor'] -= item_r[0]; mulas[rica]['peso'] -= item_r[1]
+                    mulas[pobre]['valor'] += item_r[0]; mulas[pobre]['peso'] += item_r[1]
+                    mejorado = True; break
+        if mejorado: continue
+
+        # Intercambio (Swap)
+        for i, item_r in enumerate(mulas[rica]['items']):
+            for j, item_p in enumerate(mulas[pobre]['items']):
+                peso_rica_tras = mulas[rica]['peso'] - item_r[1] + item_p[1]
+                peso_pobre_tras = mulas[pobre]['peso'] - item_p[1] + item_r[1]
+                if (peso_rica_tras <= mulas[rica]['capacidad'] and 
+                    peso_pobre_tras <= mulas[pobre]['capacidad']):
+                    nueva_dif = abs((mulas[rica]['valor'] - item_r[0] + item_p[0]) - 
+                                    (mulas[pobre]['valor'] - item_p[0] + item_r[0]))
+                    if nueva_dif < dif_actual:
+                        mulas[rica]['items'][i], mulas[pobre]['items'][j] = \
+                            mulas[pobre]['items'][j], mulas[rica]['items'][i]
+                        mulas[rica]['valor'] += (item_p[0] - item_r[0])
+                        mulas[rica]['peso'] += (item_p[1] - item_r[1])
+                        mulas[pobre]['valor'] += (item_r[0] - item_p[0])
+                        mulas[pobre]['peso'] += (item_r[1] - item_p[1])
+                        mejorado = True; break
+            if mejorado: break
+
+    return (max(m['valor'] for m in mulas) - min(m['valor'] for m in mulas)), mulas, no_asignados
+\end{verbatim}
+
+
 \end{document}
