@@ -5,9 +5,45 @@
 \usepackage{amssymb}
 \usepackage{geometry}
 \usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{helvet}
+\usepackage{setspace} 
 
+\renewcommand{\familydefault}{\sfdefault}
+
+\usepackage{relsize}
+\renewcommand{\normalsize}{\fontsize{12pt}{14.4pt}\selectfont} 
+
+% Configuración de colores para el código Python
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
 
 \geometry{a4paper, margin=1in}
+
+\date{}
 
 \title{Proyecto de Diseño y Análisis de Algoritmos: Problema de Logística Discreta (DLP)}
 \author{Salma Fonseca Curbelo C-412, José Ernesto Morales Lazo C-412}
@@ -147,16 +183,12 @@ Como la verificación se realiza en tiempo polinomial, DLP es NP.
 Se usará el problema de la Partición, el cual se demostró anteriormente que es NP-Completo.
 
 \textbf{Reducción Partición $\le_p$ DLP}
-
 Se tomará una instancia arbitraria de Partición con el conjunto $S$. Sea $W_{total} = \Sigma_{i=1}^n x_i$.
-Se construye una instancia de DLP con los siguientes parámetros específicos:
+La reducción verifica en tiempo $O(1)$ si $W_{total}$ es impar. De ser así, se genera una instancia trivial de DLP sin solución factible. Si es par, se construye la instancia de DLP:
 
 \begin{enumerate}
-    \item \textbf{Artículos:} Para cada número $x_i \in S$, se crea un artículo $i$.
-    \item \textbf{Pesos y Valores:} Se define tanto el peso como el valor igual al número original: $w_i=x_i, v_i=x_i$.
-    \item \textbf{Número de Mulas ($m$):} Se fija $m=2$.
-    \item \textbf{Diferencia permitida ($K$):} Se fija $K=0$.
-    \item \textbf{Capacidad ($C$):} Se fija $C = W_{total} / 2$. (Si $W_{total}$ es impar, no hay solución para Partición ni para este DLP, así que se asume par).
+    \item \textbf{Artículos:} Para cada $x_i \in S$, se crea un artículo con $w_i=x_i, v_i=x_i$.
+    \item \textbf{Parámetros:} $m=2$, $K=0$, y Capacidad $C = W_{total} / 2$.
 \end{enumerate}
 
 \textbf{Demostración de Equivalencia:}
@@ -190,14 +222,11 @@ Por lo tanto, el Problema de Logística Discreta (DLP) es NP-Completo.
 Dado que el Problema de Logística Discreta (DLP) ha sido demostrado como NP-Completo en la sección anterior, es computacionalmente intratable resolverlo de manera exacta para instancias grandes en tiempo polinomial. Por ello, en esta sección se exploran soluciones algorítmicas prácticas. Primero, se presenta un algoritmo de fuerza bruta que garantiza la solución óptima, útil como línea base para comparar resultados en instancias pequeñas. Posteriormente, se propone una solución eficiente basada en heurísticas, combinando un enfoque voraz (greedy) con búsqueda local reforzada, para obtener soluciones aproximadas de alta calidad en tiempo razonable.
 
 \subsection{Enfoque Exacto: Programación Dinámica con Memoización}
-
 Para obtener la solución óptima del problema de transporte discreto, se implementó un algoritmo basado en Programación Dinámica con enfoque \textit{Top-Down}. Este método explora el espacio de soluciones de manera sistemática, asegurando el cumplimiento estricto de las restricciones de peso (similar al problema \textit{Bin Packing}) mientras minimiza la función objetivo de balanceo ($V_{max} - V_{min}$).
 
 A diferencia de una fuerza bruta pura, la inclusión de una tabla de memoización evita el recálculo de subproblemas idénticos que surgen de diferentes permutaciones de asignación que resultan en el mismo estado de carga acumulada.
 
 \subsubsection{Definición Formal}
-
-El problema se modela mediante la función recursiva $DP(i, \vec{S})$, definida por las siguientes características:
 
 \begin{itemize}
     \item \textbf{Subproblema:} Determinar la asignación óptima para el conjunto de artículos restantes $\{i, \dots, N-1\}$, dado un estado actual de las mulas $\vec{S}$. El estado $\vec{S}$ se representa como una tupla que contiene pares $(v_k, w_k)$ indicando el valor y peso acumulado de cada mula $k$.
@@ -223,63 +252,45 @@ $$ T(N, M) \approx O(N \cdot M \cdot |\mathcal{S}|) $$
 Donde $|\mathcal{S}|$ representa el número de combinaciones posibles de sumas de valores y pesos acumulados válidos en las $M$ mulas.
 
 \subsubsection{Implementación y Pseudocódigo}
-A continuación se presenta la implementación del algoritmo en Python. La variable \texttt{idx} denota el artículo actual (orden topológico $0 \to N$) y \texttt{memo} almacena las soluciones óptimas para evitar recomputar ramas del árbol.
 
-\begin{verbatim}
-def resolver_transporte_discreto(articulos, mulas_capacidades):
+\begin{lstlisting}[language=Python, caption=Implementación de Programación Dinámica (Exacto)]
+def solve_discrete_transport(articulos, mulas_capacidades):
     num_articulos = len(articulos)
     num_mulas = len(mulas_capacidades)
-    # Tabla de memoización para almacenar subproblemas resueltos
     memo = {}
 
     def solve(idx, estados_mulas):
-        # Identificador único del subproblema (Estado)
         estado_actual = (idx, estados_mulas)
-        
-        # 1. Verificación en tabla de memoización (Poda por redundancia)
         if estado_actual in memo:
             return memo[estado_actual]
 
-        # 2. Caso Base: Todos los artículos asignados
         if idx == num_articulos:
             valores = [m[0] for m in estados_mulas]
-            # Retorna la diferencia (objetivo) y el estado final
             return max(valores) - min(valores), estados_mulas
 
         mejor_dif = float('inf')
         mejor_config = None
         valor_art, peso_art = articulos[idx]
 
-        # 3. Transición: Intentar asignar el artículo actual a cada mula
         for i in range(num_mulas):
             v_curr, p_curr = estados_mulas[i]
-            
-            # Verificación de restricción de capacidad (Poda por factibilidad)
             if p_curr + peso_art <= mulas_capacidades[i]:
-                # Crear nuevo estado (tuplas inmutables para hashing)
                 nuevas_mulas = list(estados_mulas)
                 nuevas_mulas[i] = (v_curr + valor_art, p_curr + peso_art)
-                
-                # Llamada Recursiva (Paso inductivo)
                 dif, config = solve(idx + 1, tuple(nuevas_mulas))
-                
-                # Minimización de la diferencia en el retorno
                 if dif < mejor_dif:
                     mejor_dif = dif
                     mejor_config = config
 
-        # Almacenar el mejor resultado encontrado para este estado
         memo[estado_actual] = (mejor_dif, mejor_config)
         return mejor_dif, mejor_config
 
-    # Estado Inicial: idx=0, mulas vacías
     estado_inicial_mulas = tuple((0, 0) for _ in range(num_mulas))
-    resultado, configuracion_final = solve(0, estado_inicial_mulas)
-    
-    return resultado, configuracion_final
-\end{verbatim}
-\subsection{Solución Eficiente Basada en Heurísticas y Metaheurísticas}
+    return solve(0, estado_inicial_mulas)
+\end{lstlisting}
 
+\subsection{Solución Eficiente Basada en Heurísticas}
+\textit{[Contenido de descripción omitido]}
 Para instancias mayores, se propone una heurística híbrida que combina kernelización previa, un algoritmo voraz inspirado en Longest Processing Time (LPT) adaptado al balance de valores, y una búsqueda local reforzada con movimientos simples e intercambios. Esta aproximación no garantiza optimalidad, pero ofrece una garantía práctica de rendimiento cercana al óptimo en muchos casos, con complejidad temporal polinomial ($O(k \log k + k n + I \cdot k^2)$), donde $I$ es el número de iteraciones de la búsqueda local (típicamente pequeño).
 
 \subsubsection{Kernelización Previa}
@@ -302,21 +313,24 @@ Se realiza un preprocesamiento para reducir la instancia, rechazando artículos 
 \end{itemize}
 
 Esta metaheurística mejora localmente la solución greedy, escapando de óptimos locales simples.
+\begin{lstlisting}[language=Python, caption=Solucion Eficiente Completa (Kernel + Greedy + B. Local Reforzada)]
+def efficient_solution(articulos, mulas_capacidades):
+    # 1. Kernelizacion (Pre-procesamiento)
+    cap_maxima = max(mulas_capacidades)
+    items_procesables = [a for a in articulos if a[1] <= cap_maxima]
+    no_asignados = [a for a in articulos if a[1] > cap_maxima]
 
-\subsubsection{Pseudocódigo}
-\begin{verbatim}
-def solucion_profesional_mejorada(articulos, mulas_capacidades):
-    # 1. Kernelización
-    items_procesables, rechazo_inicial = kernelizacion_previa(articulos, mulas_capacidades)
-    
     # 2. Greedy LPT Adaptado
+    # Ordenar por valor descendente
     items = sorted([(v, p, i) for i, (v, p) in enumerate(items_procesables)], 
                    key=lambda x: x[0], reverse=True)
+    
     num_mulas = len(mulas_capacidades)
     mulas = [{'valor': 0, 'peso': 0, 'capacidad': cap, 'items': []} 
              for cap in mulas_capacidades]
-    no_asignados = []
+    
     for item in items:
+        # Priorizar mulas con menor valor acumulado (Balanceo)
         mulas_ordenadas = sorted(range(num_mulas), key=lambda i: mulas[i]['valor'])
         asignado = False
         for i in mulas_ordenadas:
@@ -328,7 +342,7 @@ def solucion_profesional_mejorada(articulos, mulas_capacidades):
                 break
         if not asignado: no_asignados.append(item)
 
-    # 3. Búsqueda Local Reforzada
+    # 3. Busqueda Local Reforzada (Movimientos e Intercambios)
     mejorado = True
     while mejorado:
         mejorado = False
@@ -336,7 +350,7 @@ def solucion_profesional_mejorada(articulos, mulas_capacidades):
         pobre = min(range(num_mulas), key=lambda i: mulas[i]['valor'])
         dif_actual = mulas[rica]['valor'] - mulas[pobre]['valor']
 
-        # Movimiento Simple
+        # Intento de Movimiento Simple (Transferencia)
         for i, item_r in enumerate(mulas[rica]['items']):
             if mulas[pobre]['peso'] + item_r[1] <= mulas[pobre]['capacidad']:
                 nueva_dif = abs((mulas[rica]['valor'] - item_r[0]) - 
@@ -348,13 +362,14 @@ def solucion_profesional_mejorada(articulos, mulas_capacidades):
                     mejorado = True; break
         if mejorado: continue
 
-        # Intercambio (Swap)
+        # Intento de Intercambio (Swap entre dos articulos)
         for i, item_r in enumerate(mulas[rica]['items']):
             for j, item_p in enumerate(mulas[pobre]['items']):
-                peso_rica_tras = mulas[rica]['peso'] - item_r[1] + item_p[1]
-                peso_pobre_tras = mulas[pobre]['peso'] - item_p[1] + item_r[1]
-                if (peso_rica_tras <= mulas[rica]['capacidad'] and 
-                    peso_pobre_tras <= mulas[pobre]['capacidad']):
+                p_rica_t = mulas[rica]['peso'] - item_r[1] + item_p[1]
+                p_pobre_t = mulas[pobre]['peso'] - item_p[1] + item_r[1]
+                
+                if (p_rica_t <= mulas[rica]['capacidad'] and 
+                    p_pobre_t <= mulas[pobre]['capacidad']):
                     nueva_dif = abs((mulas[rica]['valor'] - item_r[0] + item_p[0]) - 
                                     (mulas[pobre]['valor'] - item_p[0] + item_r[0]))
                     if nueva_dif < dif_actual:
@@ -367,8 +382,10 @@ def solucion_profesional_mejorada(articulos, mulas_capacidades):
                         mejorado = True; break
             if mejorado: break
 
-    return (max(m['valor'] for m in mulas) - min(m['valor'] for m in mulas)), mulas, no_asignados
-\end{verbatim}
+    res = max(m['valor'] for m in mulas) - min(m['valor'] for m in mulas)
+    return res, mulas, no_asignados
+\end{lstlisting}
+
 \section{Análisis Experimental de Resultados}
 
 Para validar el desempeño de los algoritmos propuestos, se diseñó e implementó un marco de experimentación exhaustivo. El objetivo de esta fase es comparar la \textit{calidad} de las soluciones (qué tan cerca están del óptimo) y la \textit{eficiencia} temporal (cuánto tardan en ejecutarse) bajo diferentes escenarios.
@@ -409,7 +426,7 @@ Se analizó el porcentaje de diferencia de la solución aproximada respecto a la
     \centering
     \includegraphics[width=\textwidth]{solution_quality.png} 
     \caption{Calidad de las Soluciones}
-    \label{fig:solution_quality}
+    \label{fig:time_analysis}
 \end{figure}
 
 \begin{enumerate}
@@ -440,7 +457,6 @@ Los resultados experimentales confirman las predicciones teóricas de complejida
 \textbf{Precisión} & Óptima garantizada. & Alta en promedio; excelente en casos con muchos artículos pequeños. \\ \hline
 \textbf{Velocidad} & Lenta (Exponencial). Inviable para $N > 40$. & Extremadamente rápida (Tiempo Real). \\ \hline
 \textbf{Robustez} & Se detiene si la instancia es imposible de resolver perfectamente. & Se adapta descartando excedentes para mantener la operación. \\ \hline
-\textbf{Uso Ideal} & Planificación previa de cargas críticas y pequeñas. & Operación diaria con alto volumen de carga. \\ \hline
 \end{tabular}
 \caption{Resumen comparativo de los enfoques implementados.}
 \label{tab:conclusion}
