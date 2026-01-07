@@ -1,16 +1,16 @@
-Instrucciones para ejecutar el proyecto
-Ejecutar el archivo main.py en la raíz del proyecto:
-bash
-Copy
+# Instrucciones para ejecutar el proyecto
+1. Ejecutar el archivo main.py en la raíz del proyecto:
+```bash
 python main.py
+```
 o
-bash
-Copy
+
+```bash
 python3 main.py
-Al ejecutarse:
-Se ejecutarán ambos algoritmos
-Aparecerá en consola un balance de los resultados de la comparativa:
-Tiempo de ejecución
-Precisión del algoritmo aproximado con respecto al algoritmo exacto
-Se ejecutará el algoritmo exacto usando un set de casos generados aleatoriamente
-Esto reflejará el último N (cantidad de mulas de la entrada) para el cual el algoritmo exacto se detiene y da la solución en menos de 60 segundos
+```
+## Al ejecutarse:
+Se ejecutarán ambos algoritmos y aparecerá en consola un balance de los resultados de la comparativa:
+1. Tiempo de ejecución
+2.  Precisión del algoritmo aproximado con respecto al algoritmo exacto
+
+Se ejecutará el algoritmo exacto usando un set de casos generados aleatoriamente lo que reflejará el último N (cantidad de mulas de la entrada) para el cual el algoritmo exacto se detiene y da la solución en menos de 60 segundos.
