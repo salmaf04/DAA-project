@@ -45,13 +45,13 @@
 
 \date{}
 
-\title{Proyecto de Diseño y Análisis de Algoritmos: Problema de Logística Discreta (DLP)}
+\title{Proyecto de Diseño y Análisis de Algoritmos: Problema del Negocio del Transporte Discreto (NTD)}
 \author{Salma Fonseca Curbelo C-412, José Ernesto Morales Lazo C-412}
 \begin{document}
 
 \maketitle
 
-\section{Formalización del Modelo de Logística Discreta}
+\section{Formalización del Modelo del Transporte Discreto}
 
 \subsection{Estructuras de Datos de Entrada}
 \begin{itemize}
@@ -78,7 +78,7 @@ x_{ij} =
 $\forall i \in \{1, \dots, n\}, \forall j \in \{1, \dots, k\}$.
 
 \subsection{Modelo Matemático (Linealizado)}
-Para que el modelo sea procesable por un computador, linealizamos la función objetivo utilizando dos variables auxiliares: $V_{max}$ (valor de la mula más cargada) y $V_{min}$ (valor de la mula menos cargada).
+Para que el modelo sea computable, linealizamos la función objetivo utilizando dos variables auxiliares: $V_{max}$ (valor de la mula más cargada) y $V_{min}$ (valor de la mula menos cargada).
 
 \textbf{Función Objetivo:}
 \[ \text{Minimizar } Z = V_{max} - V_{min} \]
@@ -126,7 +126,7 @@ Un problema está en la clase NP si una solución propuesta (un "certificado") p
     \item \textbf{Tiempo:} La suma y la comparación son operaciones lineales. Por lo tanto, el problema de la partición es NP.
 \end{enumerate}
 
-\subsubsection{Demostración de que el problema de la partición es NP-Completo:}
+\subsubsection{Demostración de que el problema de la partición es NP-Hard:}
 
 Se usará el problema de la Suma de Subconjuntos (Subset-Sum), el cual se vió en clase que es NP-Completo.
 
@@ -138,37 +138,50 @@ Se debe transformar cualquier instancia de Subset-Sum en una instancia del probl
 
 \begin{enumerate}
     \item \textbf{Construcción:}
-    Sea una instancia de Subset-Sum con conjunto $A$ y objetivo $t$.
-    Se calcula la suma total de $A$, denotada como $\Sigma = \Sigma_{i=1}^n a_i$.
-    Se construye un nuevo conjunto $S$ para el problema partición agregando dos elementos adicionales especiales, $J$ y $K$, al conjunto $A$.
+    Sea una instancia de Subset-Sum con un conjunto $A = \{a_1, a_2, \dots, a_n\}$ y un objetivo $t$. 
+    Sea $\Sigma = \sum_{a_i \in A} a_i$. Sin pérdida de generalidad, asumimos $t \le \Sigma$ (de lo contrario la solución es trivialmente No).
+    Construimos el conjunto $S = A \cup \{J, K\}$ donde:
     \begin{itemize}
         \item $J = 2\Sigma - t$
         \item $K = \Sigma + t$
-        \item $S = A \cup \{J, K\}$
     \end{itemize}
+    La suma total del conjunto $S$ es $\text{Sum}(S) = \Sigma + (2\Sigma - t) + (\Sigma + t) = 4\Sigma$.
+    Para que $S$ tenga una partición, debe existir un subconjunto $S_1 \subset S$ tal que $\text{Sum}(S_1) = 2\Sigma$.
 
-    \item \textbf{Equivalencia:}
-    La suma total de los elementos en el nuevo conjunto es:
-    \[ \text{Sum}(S) = \Sigma + (2\Sigma - t) + (\Sigma + t) = 4\Sigma \]
+    \item \textbf{Lema de Separación (Demostración de que $J$ y $K$ están en subconjuntos distintos):}
+    Para que exista una partición válida $S_1, S_2$, los elementos $J$ y $K$ no pueden pertenecer al mismo subconjunto.
     
-    Para que exista una partición válida en $S$, se debe dividir $S$ en dos subconjuntos, cada uno sumando exactamente la mitad del total, es decir, $2\Sigma$.
-    
-    Cómo se puede llegar a $2\Sigma$:
+    \textit{Prueba por contradicción:} Supongamos que $\{J, K\} \subseteq S_1$.
+    Entonces, la suma de $S_1$ sería:
+    \[ \text{Sum}(S_1) \ge J + K = (2\Sigma - t) + (\Sigma + t) = 3\Sigma \]
+    Como para una partición válida se requiere que $\text{Sum}(S_1) = 2\Sigma$, y dado que $\Sigma > 0$, tenemos que $3\Sigma > 2\Sigma$. Esto contradice la definición de partición. Por lo tanto, $J$ y $K$ deben estar en subconjuntos distintos.
+
+    \item \textbf{Demostración de la Equivalencia ($A$ tiene subconjunto que suma $t \iff S$ tiene partición):}
+
     \begin{itemize}
-        \item Los elementos $J$ y $K$ no pueden estar en el mismo subconjunto porque $J + K = 3\Sigma$, lo cual excede el objetivo $2\Sigma$.
-        \item Por lo tanto, $J$ debe estar en un subconjunto ($S_1$) y $K$ en el otro ($S_2$).
-        \item Para que $S_1$ sume $2\Sigma$, debe contener a $J$ más algunos elementos de $A$ ($A_{sub}$) tal que:
-        \[ J + \Sigma A_{sub} = 2\Sigma \]
-        \[ (2\Sigma - t) + \Sigma A_{sub} = 2\Sigma \]
-        \[ \Sigma A_{sub} = t \]
+        \item \textbf{($\implies$):} Supongamos que existe $A' \subseteq A$ tal que $\sum_{a \in A'} a = t$.
+        Definimos $S_1 = A' \cup \{J\}$. La suma de este subconjunto es:
+        \[ \text{Sum}(S_1) = \text{Sum}(A') + J = t + (2\Sigma - t) = 2\Sigma \]
+        Como $\text{Sum}(S_1) = \frac{1}{2}\text{Sum}(S)$, el conjunto $S$ admite una partición.
+
+        \item \textbf{($\impliedby$):} Supongamos que $S$ admite una partición $S_1, S_2$ tal que $\text{Sum}(S_1) = \text{Sum}(S_2) = 2\Sigma$.
+        Por el \textit{Lema de Separación}, sabemos que $J$ y $K$ están en conjuntos distintos. Sin pérdida de generalidad, supongamos que $J \in S_1$ y $K \in S_2$.
+        
+        Sea $A_{sub} = S_1 \cap A$ (el subconjunto de elementos originales de $A$ que acompañan a $J$ en $S_1$).
+        Dado que $S_1 = A_{sub} \cup \{J\}$, su suma es:
+        \[ \text{Sum}(A_{sub}) + J = 2\Sigma \]
+        Sustituyendo el valor de $J$:
+        \[ \text{Sum}(A_{sub}) + (2\Sigma - t) = 2\Sigma \]
+        \[ \text{Sum}(A_{sub}) = t \]
+        Como $A_{sub} \subseteq A$, hemos encontrado un subconjunto de los elementos originales que suma exactamente $t$.
     \end{itemize}
 \end{enumerate}
 
-\textbf{Conclusión:} Existe una partición válida en $S$ si y solo si existe un subconjunto en $A$ que sume exactamente $t$. Como la transformación es polinomial, el problema de la Partición es NP-Completo.
+\textbf{Conclusión:} La instancia de Subset-Sum tiene solución si y solo si la instancia construida de Partición la tiene. La construcción requiere calcular $\Sigma$ y añadir dos elementos, lo cual se realiza en tiempo $O(n)$. Por tanto, el problema de la Partición es NP y NP-hard por lo que queda demostrado que es NP-Completo.
 
-\subsection{Demostración de que el Problema de la DLP es NP Completo}
+\subsection{Demostración de que el Problema de la NTD es NP Completo}
 
-\subsubsection{Demostración de que DLP es NP:}
+\subsubsection{Demostración de que NTD es NP:}
 
 \begin{enumerate}
     \item \textbf{Certificado:} Una asignación propuesta de cada artículo a una mula específica.
@@ -176,15 +189,15 @@ Se debe transformar cualquier instancia de Subset-Sum en una instancia del probl
     \item \textbf{Tiempo:} Las sumas son operaciones lineales $O(n)$ y como hay $m(m-1)/2$ pares de mulas y $m \le n$, la compración es $O(n^2)$, por lo que se puede verificar en tiempo polinomial.
 \end{enumerate}
 
-Como la verificación se realiza en tiempo polinomial, DLP es NP.
+Como la verificación se realiza en tiempo polinomial, NTD es NP.
 
-\subsubsection{Demostración que DLP es NP-difícil}
+\subsubsection{Demostración que NTD es NP-hard}
 
 Se usará el problema de la Partición, el cual se demostró anteriormente que es NP-Completo.
 
-\textbf{Reducción Partición $\le_p$ DLP}
+\textbf{Reducción Partición $\le_p$ NTD}
 Se tomará una instancia arbitraria de Partición con el conjunto $S$. Sea $W_{total} = \Sigma_{i=1}^n x_i$.
-La reducción verifica en tiempo $O(1)$ si $W_{total}$ es impar. De ser así, se genera una instancia trivial de DLP sin solución factible. Si es par, se construye la instancia de DLP:
+La reducción verifica en tiempo $O(1)$ si $W_{total}$ es impar. De ser así, se genera una instancia trivial de NTD sin solución factible. Si es par, se construye la instancia de NTD:
 
 \begin{enumerate}
     \item \textbf{Artículos:} Para cada $x_i \in S$, se crea un artículo con $w_i=x_i, v_i=x_i$.
@@ -198,9 +211,9 @@ Existen $S_1$ y $S_2$ tales que $\Sigma S_1 = \Sigma S_2 = W_{total} / 2$.
 Se asignan los artículos correspondientes a $S_1$ a la Mula 1 y los de $S_2$ a la Mula 2.
 Verificación de Peso: La Mula 1 lleva peso $W_{total} / 2$, que es $= C$. La Mula 2 igual. (Cumple).
 Verificación de Balance: El valor en la Mula 1 es $W_{total} / 2$. El valor en la Mula 2 es $W_{total} / 2$. La diferencia es $|W_{total} / 2 - W_{total} / 2| = 0$. Como $0 \le K$ (donde $K=0$), cumple la condición.
-Por tanto, DLP devuelve SÍ.
+Por tanto, NTD devuelve SÍ.
 
-Si DLP devuelve SÍ:
+Si NTD devuelve SÍ:
 Significa que existe una distribución en 2 mulas tal que la diferencia de valores es $\le 0$. Como el valor absoluto no puede ser negativo, la diferencia debe ser exactamente 0.
 
 \[ \Sigma_{i \in m1} v_i = \Sigma_{i \in m2} v_i \]
@@ -212,17 +225,17 @@ Dado que se definió $v_i = x_i$, esto implica:
 Esto constituye una partición válida del conjunto original en dos sumas iguales.
 
 \textbf{Conclusión:}
-Se ha demostrado que el problema Partición es un caso particular del problema DLP (específicamente cuando $m=2, w_i=v_i$ y $K=0$).
-Dado que el caso particular es NP-Completo, el caso general es al menos igual de difícil.
+Se ha demostrado que el problema Partición es un caso particular del problema NTD (específicamente cuando $m=2, w_i=v_i$ y $K=0$).
+Dado que el caso particular es NP Y NP-hard por lo que es NP-Completo, el caso general es al menos igual de difícil.
 
-Por lo tanto, el Problema de Logística Discreta (DLP) es NP-Completo.
+Por lo tanto, el Problema del Transporte Discreto (NTD) es NP-Completo.
 
 \section{Diseño de Soluciones Algorítmicas}
 
-Dado que el Problema de Logística Discreta (DLP) ha sido demostrado como NP-Completo en la sección anterior, es computacionalmente intratable resolverlo de manera exacta para instancias grandes en tiempo polinomial. Por ello, en esta sección se exploran soluciones algorítmicas prácticas. Primero, se presenta un algoritmo de fuerza bruta que garantiza la solución óptima, útil como línea base para comparar resultados en instancias pequeñas. Posteriormente, se propone una solución eficiente basada en heurísticas, combinando un enfoque voraz (greedy) con búsqueda local reforzada, para obtener soluciones aproximadas de alta calidad en tiempo razonable.
+Dado que el Problema del Transporte Discreto (NTD) ha sido demostrado como NP-Completo en la sección anterior, es computacionalmente intratable resolverlo de manera exacta para instancias grandes en tiempo polinomial. Por ello, en esta sección se exploran soluciones algorítmicas prácticas. Primero, se presenta un algoritmo de fuerza bruta que garantiza la solución óptima, útil como línea base para comparar resultados en instancias pequeñas. Posteriormente, se propone una solución eficiente basada en heurísticas, combinando un enfoque voraz (greedy) con búsqueda local reforzada, para obtener soluciones aproximadas de alta calidad en tiempo razonable.
 
 \subsection{Enfoque Exacto: Programación Dinámica con Memoización}
-Para obtener la solución óptima del problema de transporte discreto, se implementó un algoritmo basado en Programación Dinámica con enfoque \textit{Top-Down}. Este método explora el espacio de soluciones de manera sistemática, asegurando el cumplimiento estricto de las restricciones de peso (similar al problema \textit{Bin Packing}) mientras minimiza la función objetivo de balanceo ($V_{max} - V_{min}$).
+Para obtener la solución óptima del problema de transporte discreto, se implementó un algoritmo basado en Programación Dinámica con enfoque \textit{Top-Down}. Este método explora el espacio de soluciones de manera sistemática, asegurando el cumplimiento estricto de las restricciones de peso.
 
 A diferencia de una fuerza bruta pura, la inclusión de una tabla de memoización evita el recálculo de subproblemas idénticos que surgen de diferentes permutaciones de asignación que resultan en el mismo estado de carga acumulada.
 
@@ -290,7 +303,6 @@ def solve_discrete_transport(articulos, mulas_capacidades):
 \end{lstlisting}
 
 \subsection{Solución Eficiente Basada en Heurísticas}
-\textit{[Contenido de descripción omitido]}
 Para instancias mayores, se propone una heurística híbrida que combina kernelización previa, un algoritmo voraz inspirado en Longest Processing Time (LPT) adaptado al balance de valores, y una búsqueda local reforzada con movimientos simples e intercambios. Esta aproximación no garantiza optimalidad, pero ofrece una garantía práctica de rendimiento cercana al óptimo en muchos casos, con complejidad temporal polinomial ($O(k \log k + k n + I \cdot k^2)$), donde $I$ es el número de iteraciones de la búsqueda local (típicamente pequeño).
 
 \subsubsection{Kernelización Previa}
